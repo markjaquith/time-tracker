@@ -164,6 +164,42 @@ function makeTentativeTaskLine(task: string, startTime: number): string {
   return `- ${TRACKING_PREFIX} ${startTime} ${task}`;
 }
 
+export async function restoreTrackingFromLog() {
+  const logFilePath = getLogFilePath();
+
+  try {
+    const logContent = await fs.promises.readFile(logFilePath, "utf8");
+    const lines = logContent.split("\n");
+    const lastTentativeLine = lines
+      .reverse()
+      .find((line) => line.startsWith(`- ${TRACKING_PREFIX}`));
+
+    if (lastTentativeLine) {
+      const [, , timestampStr, ...taskParts] = lastTentativeLine.split(" ");
+      const taskName = taskParts.join(" ");
+      const timestamp = Number(timestampStr);
+
+      if (!isNaN(timestamp)) {
+        // Restore state
+        startTime = timestamp;
+        task = taskName;
+        timerInterval = setInterval(updateStatusBar, 50);
+        updateStatusBar();
+        vscode.window.showInformationMessage(`Resumed tracking: ${taskName}`);
+      } else {
+        vscode.window.showErrorMessage(
+          "Failed to restore tracking: invalid timestamp"
+        );
+      }
+    }
+  } catch (err) {
+    // It's fine if the log file doesn't exist yet
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+      vscode.window.showErrorMessage(`Failed to read log file: ${err}`);
+    }
+  }
+}
+
 export function canTrack(): boolean {
   return !!vscode.workspace.workspaceFolders;
 }

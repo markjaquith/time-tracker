@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import {
   canTrack,
+  restoreTrackingFromLog,
   startTracking,
   stopTracking,
   updateStatusBar,
@@ -27,7 +28,7 @@ function stopTrackingCommand() {
 }
 
 // VS CODE WIRING
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   // Create the command mappings.
   const startCommand = vscode.commands.registerCommand(
     "time-tracker.startTracking",
@@ -40,6 +41,9 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register the commands and the status bar.
   context.subscriptions.push(updateStatusBar(), startCommand, stopCommand);
+
+  // If we were tracking when the extension was deactivated, start tracking again.
+  await restoreTrackingFromLog();
 }
 
 export function deactivate() {
