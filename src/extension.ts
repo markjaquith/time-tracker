@@ -1,8 +1,20 @@
 import * as vscode from "vscode";
-import { startTracking, stopTracking, updateStatusBar } from "./tracking";
+import {
+  canTrack,
+  startTracking,
+  stopTracking,
+  updateStatusBar,
+} from "./tracking";
 
 // COMMANDS
 function startTrackingCommand() {
+  if (!canTrack()) {
+    // Tell the user they need to be in a workspace.
+    vscode.window.showInformationMessage(
+      "Please open a folder or a workspace to track your time"
+    );
+    return;
+  }
   vscode.window.showInputBox({ prompt: "Enter task name" }).then((task) => {
     if (task) {
       startTracking(task);
@@ -16,8 +28,6 @@ function stopTrackingCommand() {
 
 // VS CODE WIRING
 export function activate(context: vscode.ExtensionContext) {
-  console.log('"time-tracker" extension is now active');
-
   // Create the command mappings.
   const startCommand = vscode.commands.registerCommand(
     "time-tracker.startTracking",
