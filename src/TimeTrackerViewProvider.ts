@@ -21,6 +21,16 @@ export class TimeTrackerViewProvider implements vscode.WebviewViewProvider {
     this._updateWebviewContent();
   }
 
+  async refresh() {
+    this._updateWebviewContent();
+  }
+
+  displayDuration(duration: number): string {
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
+    return `${hours}:${minutes.toString().padStart(2, "0")}`;
+  }
+
   async _updateWebviewContent() {
     const logs = await parseLogs(); // Use the `parseLogs` function
     const html = this._generateHtml(logs);
@@ -32,15 +42,9 @@ export class TimeTrackerViewProvider implements vscode.WebviewViewProvider {
   _generateHtml(logs: LogEntry[]): string {
     const logEntriesHtml = logs
       .map((log) => {
-        if (log.type === "tracking") {
-          return `<li><b>Tracking:</b> ${new Date(
-            log.timestamp
-          ).toLocaleString()} - ${log.task}</li>`;
-        } else {
-          return `<li><b>Logged:</b> ${new Date(
-            log.timestamp
-          ).toLocaleString()} - ${log.task} (${log.duration} seconds)</li>`;
-        }
+        return `<li><span>${log.date}</span><b>${this.displayDuration(
+          log.duration ?? 0
+        )}</b><span>${log.task}</span>`;
       })
       .join("");
 
@@ -60,6 +64,8 @@ export class TimeTrackerViewProvider implements vscode.WebviewViewProvider {
           li {
             margin-bottom: 8px;
 						list-style: none;
+						display: flex;
+						gap: 0.5rem;
           }
         </style>
       </head>

@@ -39,9 +39,16 @@ export async function activate(context: vscode.ExtensionContext) {
     "time-tracker.stopTracking",
     stopTrackingCommand
   );
+  const timeTrackerViewProvider = new TimeTrackerViewProvider(
+    context.extensionUri
+  );
   const viewProvider = vscode.window.registerWebviewViewProvider(
     "timeTrackerLogs",
-    new TimeTrackerViewProvider(context.extensionUri)
+    timeTrackerViewProvider
+  );
+  const refreshCommand = vscode.commands.registerCommand(
+    "time-tracker.refresh",
+    () => timeTrackerViewProvider.refresh()
   );
 
   // Register the commands and the status bar.

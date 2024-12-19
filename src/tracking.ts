@@ -17,9 +17,8 @@ let startTime: number | null = null;
 
 // API
 export interface LogEntry {
-  type: "tracking" | "finalized";
-  timestamp: number; // Unix timestamp
-  duration?: number; // In seconds (if finalized)
+  date: string; // ISO date string
+  duration?: number; // In minutes (if finalized)
   task: string;
 }
 
@@ -32,34 +31,16 @@ export async function parseLogs(): Promise<LogEntry[]> {
     const entries: LogEntry[] = [];
 
     for (const line of lines) {
-      if (line.startsWith(`- ${TRACKING_PREFIX}`)) {
-        // Tentative tracking entry
-        const [, , timestampStr, ...taskParts] = line.split(" ");
-        const timestamp = Number(timestampStr);
-        const task = taskParts.join(" ");
-        if (!isNaN(timestamp)) {
-          entries.push({
-            type: "tracking",
-            timestamp,
-            task,
-          });
-        }
-      } else if (line.startsWith("-")) {
-        // Finalized entry
-        const [, timestampStr, durationStr, ...taskParts] = line.split(" ");
-        const timestamp = new Date(timestampStr).getTime();
-        const [hours, minutes] = durationStr.split(":").map(Number);
-        const duration = hours * 3600 + minutes * 60;
-        const task = taskParts.join(" ");
-        if (!isNaN(timestamp) && !isNaN(duration)) {
-          entries.push({
-            type: "finalized",
-            timestamp,
-            duration,
-            task,
-          });
-        }
-      }
+      // Finalized entry
+      const [, date, durationStr, ...taskParts] = line.split(" ");
+      const [hours, minutes] = durationStr.split(":").map(Number);
+      const duration = hours * 60 + minutes;
+      const task = taskParts.join(" ");
+      entries.push({
+        date,
+        duration,
+        task,
+      });
     }
 
     return entries;
@@ -189,6 +170,7 @@ async function logTask(task: string, startTime: number, duration: number) {
     );
     await fs.promises.writeFile(logFilePath, updatedLogContent, "utf8");
     vscode.window.showInformationMessage(`Logged task: ${task}`);
+    vscode.commands.executeCommand("time-tracker.refresh");
   } catch (err) {
     vscode.window.showErrorMessage(`Failed to finalize log entry: ${err}`);
   }
