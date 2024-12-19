@@ -6,6 +6,7 @@ import {
   stopTracking,
   updateStatusBar,
 } from "./tracking";
+import { TimeTrackerViewProvider } from "./TimeTrackerViewProvider";
 
 // COMMANDS
 function startTrackingCommand() {
@@ -38,14 +39,23 @@ export async function activate(context: vscode.ExtensionContext) {
     "time-tracker.stopTracking",
     stopTrackingCommand
   );
+  const viewProvider = vscode.window.registerWebviewViewProvider(
+    "timeTrackerLogs",
+    new TimeTrackerViewProvider(context.extensionUri)
+  );
 
   // Register the commands and the status bar.
-  context.subscriptions.push(updateStatusBar(), startCommand, stopCommand);
+  context.subscriptions.push(
+    viewProvider,
+    updateStatusBar(),
+    startCommand,
+    stopCommand
+  );
 
   // If we were tracking when the extension was deactivated, start tracking again.
   await restoreTrackingFromLog();
 }
 
 export function deactivate() {
-  stopTracking();
+  // stopTracking();
 }
