@@ -54,6 +54,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // Register the commands and the status bar.
   context.subscriptions.push(
     viewProvider,
+    refreshCommand,
     updateStatusBar(),
     startCommand,
     stopCommand
